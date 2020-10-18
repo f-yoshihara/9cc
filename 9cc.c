@@ -189,13 +189,16 @@ Node *expr()
     {
         if (consume('+'))
         {
-            node = new_node(ND_ADD, node, expr());
+            node = new_node(ND_ADD, node, mul());
         }
         else if (consume('-'))
         {
-            node = new_node(ND_SUB, node, expr());
+            node = new_node(ND_SUB, node, mul());
         }
-        return node;
+        else
+        {
+            return node;
+        }
     }
 }
 
@@ -206,13 +209,16 @@ Node *mul()
     {
         if (consume('*'))
         {
-            node = new_node(ND_MUL, node, expr());
+            node = new_node(ND_MUL, node, primary());
         }
         else if (consume('/'))
         {
-            node = new_node(ND_DIV, node, expr());
+            node = new_node(ND_DIV, node, primary());
         }
-        return node;
+        else
+        {
+            return node;
+        }
     }
 }
 

@@ -37,3 +37,45 @@ b = *p;
 > a piece of paper with a particular amount of money printed on it that can be exchanged in a shop for goods of that value:
 
 [cambridge dictionary](https://dictionary.cambridge.org/ja/dictionary/english/token)
+
+### 再帰下降構文解析
+
+```ebnf
+expr    = mul ("+" mul | "-" mul)*
+mul     = primary ("*" primary | "/" primary)*
+primary = num | "(" expr ")"
+```
+
+### スタックマシン
+
+x86-64はスタックマシンではなくレジスタマシン
+
+レジスタマシンでスタックマシンをエミュレートするには
+
+スタックの先頭を指すレジスタ（スタックポインタ）を用意する
+
+x86-64のpushやpopは暗黙的にRSPが指し示すメモリのアドレスにアクセスしつつアドレスの更新を行う。
+
+pushであればRSPのアドレスをインクリメントして更新しそのアドレスに値を格納する。
+
+popであればRSPのアドレスから値を取得してアドレスをデクリメントして更新する。
+
+```c
+struct Node
+{
+    NodeKind kind; // ノードの型
+    Node *lhs;     // 左辺
+    Node *rhs;     // 右辺
+    int val;       // 値（kindがND_NUMの場合のみ使用）
+};
+```
+
+```s
+// 2*3
+push 2
+push 3
+pop rdi
+pop rax
+mul rax, rdi
+push rax
+```
