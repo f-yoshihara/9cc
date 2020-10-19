@@ -79,3 +79,29 @@ pop rax
 mul rax, rdi
 push rax
 ```
+
+### 比較演算子を導入する
+
+```ebnf
+expr       = equality
+equality   = relational ("==" relational | "!=" relational)*
+relational = add ("<" add | "<=" add | ">" add | ">=" add)*
+add        = mul ("+" mul | "-" mul)*
+mul        = unary ("*" unary | "/" unary)*
+unary      = ("+" | "-")? primary
+primary    = num | "(" expr ")"
+```
+
+### アセンブリでの比較演算
+
+```s
+pop rdi
+pop rax
+cmp rax, rdi
+sete al
+movzb rax, al
+```
+
+cmpで指定のレジスタの値を比較することができる。同一である場合は1、それ以外は0を特定のレジスタにセットする。sete命令では指定のレジスタに比較演算の結果の値をロードする。
+seteは8ビットレジスタしか指定することができない。alはraxの下位8ビットである。
+movzbでraxの上位56ビットをクリアする。

@@ -28,5 +28,11 @@ assert 0 '-1+1'
 assert 3 '-1+(+5-1)'
 assert 1 '-1+(-5+7)'
 assert 2 '(-5+7)'
+assert 1 '1==1'
+assert 1 '1>=1'
+assert 0 '1!=1'
+assert 0 '1>1'
+assert 0 '2<1'
+assert 1 '1<2'
 
 echo ok
