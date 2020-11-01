@@ -180,3 +180,40 @@ main() {
   return sum(1, 10); // 55を返す
 }
 ```
+
+#### パーサ変更
+
+##### EBNF復習
+
+εは何もないことを示す。
+
+書き方	意味
+A*	Aの0回以上の繰り返し
+A?	Aまたはε
+A | B	AまたはB
+( ... )	グループ化
+
+```ebnf
+expr       = equality
+equality   = relational ("==" relational | "!=" relational)*
+relational = add ("<" add | "<=" add | ">" add | ">=" add)*
+add        = mul ("+" mul | "-" mul)*
+mul        = unary ("*" unary | "/" unary)*
+unary      = ("+" | "-")? primary
+primary    = num | "(" expr ")"
+```
+
+↑を↓に修正する。
+
+```ebnf
+program    = stmt*
+stmt       = expr ";"
+expr       = assign
+assign     = equality ("=" assign)?
+equality   = relational ("==" relational | "!=" relational)*
+relational = add ("<" add | "<=" add | ">" add | ">=" add)*
+add        = mul ("+" mul | "-" mul)*
+mul        = unary ("*" unary | "/" unary)*
+unary      = ("+" | "-")? primary
+primary    = num | ident | "(" expr ")"
+```

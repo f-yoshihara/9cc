@@ -11,7 +11,9 @@ int main(int argc, char **argv)
     user_input = argv[1];
     token = tokenize(argv[1]);
 
-    Node *node = expr();
+    // Node *node = expr();
+    // Node *node = program();
+    Node *node = stmt();
 
     // アセンブリ冒頭部分
     printf(".intel_syntax noprefix\n");

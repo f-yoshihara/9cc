@@ -9,6 +9,7 @@
 typedef enum
 {
     TK_RESERVED, // 記号
+    TK_IDENT,    //  識別子
     TK_NUM,      // 整数トークン
     TK_EOF,      // 入力の終わりを示すトークン
 } TokenKind;
@@ -70,6 +71,17 @@ bool consume(char *op)
     }
     token = token->next;
     return true;
+}
+
+Token *consume_ident()
+{
+    if (token->kind != TK_IDENT)
+    {
+        return false;
+    }
+    Token *result = token;
+    token = token->next;
+    return result;
 }
 
 // 次のトークンが期待している記号のときにはトークンを一つ読み進める。
@@ -136,7 +148,7 @@ Token *tokenize(char *p)
             p += 2;
             continue;
         }
-        if (strchr("+-*/()<>", *p))
+        if (strchr("+-*/()<>;", *p))
         {
             cur = new_token(TK_RESERVED, cur, p++, 1);
             continue;
@@ -152,6 +164,14 @@ Token *tokenize(char *p)
             // printf("%ld\n", cur->val);
             continue;
         }
+
+        // 小文字のアルファベットである場合
+        if ('a' <= *p && *p <= 'z')
+        {
+            cur = new_token(TK_IDENT, cur, p++, 1);
+            continue;
+        }
+
         error_at(p, "cannot tokenize");
     }
     new_token(TK_EOF, cur, p, 0);
@@ -160,15 +180,17 @@ Token *tokenize(char *p)
 
 typedef enum
 {
-    ND_ADD, // +
-    ND_SUB, // -
-    ND_MUL, // *
-    ND_DIV, // /
-    ND_EQ,  // ==
-    ND_NE,  // !=
-    ND_LT,  // <
-    ND_LE,  // <=
-    ND_NUM, // int
+    ND_ADD,    // +
+    ND_SUB,    // -
+    ND_MUL,    // *
+    ND_DIV,    // /
+    ND_ASSIGN, // =
+    ND_LVAR,   // local variable
+    ND_EQ,     // ==
+    ND_NE,     // !=
+    ND_LT,     // <
+    ND_LE,     // <=
+    ND_NUM,    // int
 } NodeKind;
 
 typedef struct Node Node;
@@ -179,6 +201,7 @@ struct Node
     Node *lhs;     // 左辺
     Node *rhs;     // 右辺
     int val;       // 値（kindがND_NUMの場合のみ使用）
+    int offset;
 };
 
 Node *new_node(NodeKind kind, Node *lhs, Node *rhs)
@@ -198,7 +221,18 @@ Node *new_node_num(int val)
     return node;
 }
 
+Node *new_node_ident(char c)
+{
+    Node *node = calloc(1, sizeof(Node));
+    node->kind = ND_LVAR;
+    node->offset = (c - 'a' + 1) * 8;
+    return node;
+}
+
+Node *program();
+Node *stmt();
 Node *expr();
+Node *assign();
 Node *equality();
 Node *relational();
 Node *add();
@@ -206,9 +240,41 @@ Node *mul();
 Node *unary();
 Node *primary();
 
+Node *code[100];
+
+Node *program()
+{
+    int i = 0;
+    while (!at_eof())
+    {
+        code[i++] = stmt();
+    }
+    code[i] = NULL;
+}
+
+Node *stmt()
+{
+    Node *node = expr();
+    expect(";");
+    return node;
+}
+
 Node *expr()
 {
-    return equality();
+    return assign();
+}
+
+Node *assign()
+{
+    Node *node = equality();
+    if (consume("="))
+    {
+        node = new_node(ND_LVAR, node, assign());
+    }
+    else
+    {
+        return node;
+    }
 }
 
 Node *equality()
@@ -324,6 +390,11 @@ Node *primary()
             Node *node = expr();
             expect(")");
             return node;
+        }
+        Token *tok = consume_ident();
+        if (tok)
+        {
+            return new_node_ident(tok->str[0]);
         }
         return new_node_num(expect_number());
     }
