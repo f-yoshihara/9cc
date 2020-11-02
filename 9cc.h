@@ -148,7 +148,7 @@ Token *tokenize(char *p)
             p += 2;
             continue;
         }
-        if (strchr("+-*/()<>;", *p))
+        if (strchr("+-*/()<>=;", *p))
         {
             cur = new_token(TK_RESERVED, cur, p++, 1);
             continue;
@@ -269,7 +269,7 @@ Node *assign()
     Node *node = equality();
     if (consume("="))
     {
-        node = new_node(ND_LVAR, node, assign());
+        node = new_node(ND_ASSIGN, node, assign());
     }
     else
     {
@@ -400,13 +400,49 @@ Node *primary()
     }
 }
 
+// 対象の変数のアドレスがスタックに積まれている状態にする
+void gen_lval(Node *node)
+{
+    if (node->kind != ND_LVAR)
+    {
+        error("lval is not valiable");
+    }
+    printf("  mov rax, rbp\n");
+    printf("  sub rax, %d\n", node->offset);
+    printf("  push rax\n");
+}
+
 // ノードを受け取ってスタックマシンのように計算するための
 // アセンブリを出力する
 void gen(Node *node)
 {
-    if (node->kind == ND_NUM)
+    switch (node->kind)
     {
+    case ND_NUM:
         printf("  push %d\n", node->val);
+        return;
+    // 変数が右辺に来ている場合に有効
+    case ND_LVAR:
+        gen_lval(node);
+        // 変数のアドレスをraxにロード
+        printf("  pop rax\n");
+        // 変数の値をraxにコピー
+        printf("  mov rax, [rax]\n");
+        // 変数の値をスタックに積む
+        printf("  push rax\n");
+        return;
+    // 代入演算子なので変数が左辺にある
+    case ND_ASSIGN:
+        gen_lval(node->lhs);
+        gen(node->rhs);
+        // 右辺の値をrdiにpopする
+        printf("  pop rdi\n");
+        // 変数のアドレスをraxにpopする
+        printf("  pop rax\n");
+        // 右辺の値をraxのアドレスにストアする
+        printf("  mov [rax], rdi\n");
+        // 右辺の値をスタックに積む
+        printf("  push rdi\n");
         return;
     }
     gen(node->lhs);

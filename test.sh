@@ -34,5 +34,8 @@ assert 0 '1!=1;'
 assert 0 '1>1;'
 assert 0 '2<1;'
 assert 1 '1<2;'
+assert 5 'a=5;'
+assert 12 'a=10;a+2;'
+assert 1 'a=6;a-5;'
 
 echo ok
