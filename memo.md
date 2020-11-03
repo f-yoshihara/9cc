@@ -257,3 +257,21 @@ push rax
 sub rsp, 8
 mov [rsp], rax
 ```
+
+```c
+Token head;
+head.next = NULL;
+Token *cur = &head;
+```
+
+初期化されていない変数を参照しようとすると`segmentation fault`が発生する。
+
+初期化されているか否かは下記のように判定可能。
+
+```c
+if(var){
+  // 初期化されている
+}else{
+  // 初期化されていない
+}
+```

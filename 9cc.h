@@ -28,6 +28,20 @@ struct Token
 
 Token *token;
 
+typedef struct LVar LVar;
+
+// ローカル変数の型
+struct LVar
+{
+    LVar *next; // 次の変数かNULL
+    char *name; // 変数の名前
+    int len;    // 名前の長さ
+    int offset; // RBPからのオフセット
+};
+
+// ローカル変数
+LVar *locals;
+
 // 入力値
 char *user_input;
 
@@ -221,11 +235,37 @@ Node *new_node_num(int val)
     return node;
 }
 
-Node *new_node_ident(char c)
+LVar *find_lvar(Token *tok)
+{
+    for (LVar *var = locals; var; var = var->next)
+    {
+        if (var->len == tok->len && !memcmp(tok->str, var->name, var->len))
+        {
+            return var;
+        }
+    }
+    return NULL;
+}
+
+Node *new_node_ident(Token *tok)
 {
     Node *node = calloc(1, sizeof(Node));
     node->kind = ND_LVAR;
-    node->offset = (c - 'a' + 1) * 8;
+    LVar *lvar = find_lvar(tok);
+    if (lvar)
+    {
+        node->offset = lvar->offset;
+    }
+    else
+    {
+        lvar = calloc(1, sizeof(LVar));
+        lvar->next = locals;
+        lvar->name = tok->str;
+        lvar->len = tok->len;
+        lvar->offset = ((locals) ? locals->offset : 0) + 8;
+        node->offset = lvar->offset;
+        locals = lvar;
+    }
     return node;
 }
 
@@ -394,7 +434,7 @@ Node *primary()
         Token *tok = consume_ident();
         if (tok)
         {
-            return new_node_ident(tok->str[0]);
+            return new_node_ident(tok);
         }
         return new_node_num(expect_number());
     }

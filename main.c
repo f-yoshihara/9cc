@@ -12,10 +12,6 @@ int main(int argc, char **argv)
     token = tokenize(argv[1]);
     program();
 
-    // Node *node = expr();
-    // Node *node = program();
-    // Node *node = stmt();
-
     // アセンブリ冒頭部分
     printf(".intel_syntax noprefix\n");
     printf(".globl main\n");
