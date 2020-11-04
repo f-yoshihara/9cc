@@ -146,6 +146,7 @@ Token *tokenize(char *p)
     Token head;
     head.next = NULL;
     Token *cur = &head;
+    int len = 0;
 
     while (*p)
     {
@@ -175,14 +176,21 @@ Token *tokenize(char *p)
             cur = new_token(TK_NUM, cur, p, 0);
             // 進めたcurのvalにlong型の数値をいれる
             cur->val = strtol(p, &p, 10);
-            // printf("%ld\n", cur->val);
             continue;
         }
 
         // 小文字のアルファベットである場合
         if ('a' <= *p && *p <= 'z')
         {
-            cur = new_token(TK_IDENT, cur, p++, 1);
+            if (cur->kind == TK_IDENT)
+            {
+                cur->len = ++len;
+                p++;
+            }
+            else
+            {
+                cur = new_token(TK_IDENT, cur, p++, len = 1);
+            }
             continue;
         }
 

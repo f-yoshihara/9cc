@@ -39,6 +39,7 @@ assert 12 'a=10;a+2;'
 assert 1 'a=6;a-5;'
 assert 13 'a=6;b=7;a+b;'
 assert 101 'a=100;b=1;a+b;'
-# assert 3 'foo=1;bar=2;foo+bar'
+assert 11 'foo=1;bar=10;foo+bar;'
+assert 10 'foo=1;bar=2+7;foo+bar;'
 
 echo ok
