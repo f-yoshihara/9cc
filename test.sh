@@ -41,5 +41,7 @@ assert 13 'a=6;b=7;a+b;'
 assert 101 'a=100;b=1;a+b;'
 assert 11 'foo=1;bar=10;foo+bar;'
 assert 10 'foo=1;bar=2+7;foo+bar;'
+assert 5 'return 5;'
+assert 13 'a = 3; b = 10; return a + b;'
 
 echo ok

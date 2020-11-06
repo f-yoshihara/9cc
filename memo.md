@@ -275,3 +275,29 @@ if(var){
   // 初期化されていない
 }
 ```
+
+### return文
+
+```bnf
+program = stmt*
+stmt    = expr ";"
+        | "return" expr ";"
+...
+```
+
+文字列のポインタに[]をつけるとポインタからのオフセット分の位置の値を見てくれる
+
+```c
+void gen(Node *node) {
+  if (node->kind == ND_RETURN) {
+    gen(node->lhs); // gen(node->rhs);
+    printf("  pop rax\n");
+    printf("  mov rsp, rbp\n");
+    printf("  pop rbp\n");
+    printf("  ret\n");
+    return;
+  }
+}
+```
+
+間違い？
