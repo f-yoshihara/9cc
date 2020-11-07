@@ -190,6 +190,41 @@ int is_alnum(char c)
            (c == '_');
 }
 
+// 無限ループ入る
+// Token *tokenize_keyword(char *p, Token *cur, int kind)
+// {
+//     char *keyword;
+//     switch (kind)
+//     {
+//     case TK_RETURN:
+//         keyword = "return";
+//         break;
+//     case TK_IF:
+//         keyword = "if";
+//         break;
+//     case TK_ELSE:
+//         keyword = "else";
+//         break;
+//     case TK_WHILE:
+//         keyword = "while";
+//         break;
+//     case TK_FOR:
+//         keyword = "for";
+//         break;
+//     default:
+//         return NULL;
+//     }
+//     int len = strlen(keyword);
+//     if (strncmp(p, keyword, len) != 0 || is_alnum(p[len]) || cur->kind == TK_IDENT)
+//     {
+//         return NULL;
+//     }
+//     printf("%d\n", kind);
+//     Token *tok = new_token(kind, cur, p, len);
+//     p += len;
+//     return tok;
+// }
+
 // 入力文字列pをトークン化してToken型の値へのポインタを返す
 Token *tokenize(char *p)
 {
@@ -240,6 +275,12 @@ Token *tokenize(char *p)
         {
             cur = new_token(TK_IF, cur, p, 2);
             p += 2;
+            continue;
+        }
+        if (strncmp(p, "else", 4) == 0 && !is_alnum(p[4]) && cur->kind != TK_IDENT)
+        {
+            cur = new_token(TK_ELSE, cur, p, 4);
+            p += 4;
             continue;
         }
 
@@ -632,9 +673,21 @@ void gen(Node *node)
         printf("  pop rax\n");
         // 条件文の結果を0と比較する
         printf("  cmp rax, 0\n");
-        printf("  je .Lend%d\n", label_num);
-        gen(node->then);
-        printf(".Lend%d:\n", label_num++);
+        if (node->ethen)
+        {
+            printf("  je .Lels%d\n", label_num);
+            gen(node->then);
+            printf("  jmp .Lend%d\n", label_num);
+            printf(".Lels%d:\n", label_num);
+            gen(node->ethen);
+            printf(".Lend%d:\n", label_num++);
+        }
+        else
+        {
+            printf("  je .Lend%d\n", label_num);
+            gen(node->then);
+            printf(".Lend%d:\n", label_num++);
+        }
         return;
     }
     gen(node->lhs);

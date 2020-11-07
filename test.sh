@@ -46,5 +46,6 @@ assert 13 'a = 3; b = 10; return a + b;'
 assert 10 'if(1<2) return 10;'
 assert 15 'if(1<2) return 15;'
 assert 3 'if(1) return 3;'
+assert 5 'if(1<0) return 3; else return 5;'
 
 echo ok
