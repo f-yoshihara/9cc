@@ -11,8 +11,12 @@ typedef enum
     TK_RESERVED, // 記号
     TK_IDENT,    //  識別子
     TK_NUM,      // 整数トークン
-    TK_RETURN,   // return
     TK_EOF,      // 入力の終わりを示すトークン
+    TK_RETURN,   // return
+    TK_IF,       // if
+    TK_ELSE,     // else
+    TK_WHILE,    // while
+    TK_FOR,      // for
 } TokenKind;
 
 typedef struct Token Token;
@@ -99,9 +103,9 @@ Token *consume_ident()
     return result;
 }
 
-Token *consume_return()
+Token *consume_keyword(TokenKind kind)
 {
-    if (token->kind != TK_RETURN)
+    if (token->kind != kind)
     {
         return false;
     }
@@ -110,13 +114,38 @@ Token *consume_return()
     return result;
 }
 
+Token *consume_return()
+{
+    return consume_keyword(TK_RETURN);
+}
+
+Token *consume_if()
+{
+    return consume_keyword(TK_IF);
+}
+
+Token *consume_else()
+{
+    return consume_keyword(TK_ELSE);
+}
+
+Token *consume_while()
+{
+    return consume_keyword(TK_WHILE);
+}
+
+Token *consume_for()
+{
+    return consume_keyword(TK_FOR);
+}
+
 // 次のトークンが期待している記号のときにはトークンを一つ読み進める。
 // それ以外の場合にはエラーを報告する。
 void expect(char *op)
 {
     if (token->kind != TK_RESERVED || !starts_with(token->str, op))
     {
-        error_at(token->str, "'%c'ではありません", op);
+        error_at(token->str, "'%c'ではありません", *op);
     }
     token = token->next;
 }
@@ -207,6 +236,13 @@ Token *tokenize(char *p)
             continue;
         }
 
+        if (strncmp(p, "if", 2) == 0 && !is_alnum(p[2]) && cur->kind != TK_IDENT)
+        {
+            cur = new_token(TK_IF, cur, p, 2);
+            p += 2;
+            continue;
+        }
+
         // 小文字のアルファベットである場合
         if ('a' <= *p && *p <= 'z')
         {
@@ -242,6 +278,8 @@ typedef enum
     ND_LE,     // <=
     ND_NUM,    // int
     ND_RETURN, // return
+    ND_IF,     // if
+    ND_WHILE,  // while
 } NodeKind;
 
 typedef struct Node Node;
@@ -253,6 +291,16 @@ struct Node
     Node *rhs;     // 右辺
     int val;       // 値（kindがND_NUMの場合のみ使用）
     int offset;
+
+    // 条件式
+    Node *cond;
+    // ifブロック内の文を入れ子にする
+    Node *then;
+    // elseブロック内の文を入れ子にする
+    Node *ethen;
+    // for(init;cond;inc)
+    Node *init;
+    Node *inc;
 };
 
 Node *new_node(NodeKind kind, Node *lhs, Node *rhs)
@@ -335,13 +383,56 @@ Node *stmt()
     if (consume_return())
     {
         node = new_node(ND_RETURN, node, expr());
+        expect(";");
+    }
+    else if (consume_if())
+    {
+        node = new_node(ND_IF, node, NULL);
+        expect("(");
+        node->cond = expr();
+        expect(")");
+        node->then = stmt();
+        if (consume_else())
+        {
+            node->ethen = stmt();
+        }
+    }
+    else if (consume_while())
+    {
+        node = new_node(ND_WHILE, node, NULL);
+        expect("(");
+        node->cond = expr();
+        expect(")");
+        node->then = stmt();
+    }
+    else if (consume_for())
+    {
+        node = new_node(ND_WHILE, node, NULL);
+        expect("(");
+        if (!consume(";"))
+        {
+            node->init = expr();
+            expect(";");
+        }
+        if (!consume(";"))
+        {
+            node->cond = expr();
+            expect(";");
+        }
+        if (!consume(";"))
+        {
+            node->inc = expr();
+            expect(";");
+        }
+        expect(")");
+        node->then = stmt();
     }
     else
     {
         node = expr();
+        expect(";");
     }
 
-    expect(";");
     return node;
 }
 
@@ -498,6 +589,8 @@ void gen_lval(Node *node)
     printf("  push rax\n");
 }
 
+int label_num = 0;
+
 // ノードを受け取ってスタックマシンのように計算するための
 // アセンブリを出力する
 void gen(Node *node)
@@ -532,10 +625,16 @@ void gen(Node *node)
         return;
     case ND_RETURN:
         gen(node->rhs);
+        return;
+    case ND_IF:
+        // 条件文内の計算を行う
+        gen(node->cond);
         printf("  pop rax\n");
-        printf("  mov rsp, rbp\n");
-        printf("  pop rbp\n");
-        printf("  ret\n");
+        // 条件文の結果を0と比較する
+        printf("  cmp rax, 0\n");
+        printf("  je .Lend%d\n", label_num);
+        gen(node->then);
+        printf(".Lend%d:\n", label_num++);
         return;
     }
     gen(node->lhs);

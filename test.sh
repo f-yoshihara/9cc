@@ -43,5 +43,8 @@ assert 11 'foo=1;bar=10;foo+bar;'
 assert 10 'foo=1;bar=2+7;foo+bar;'
 assert 5 'return 5;'
 assert 13 'a = 3; b = 10; return a + b;'
+assert 10 'if(1<2) return 10;'
+assert 15 'if(1<2) return 15;'
+assert 3 'if(1) return 3;'
 
 echo ok

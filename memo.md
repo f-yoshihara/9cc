@@ -301,3 +301,33 @@ void gen(Node *node) {
 ```
 
 間違い？
+
+### 制御構文
+
+- if
+- while
+- for
+
+```ebnf
+program = stmt*
+stmt    = expr ";"
+        | "if" "(" expr ")" stmt ("else" stmt)?
+        | "while" "(" expr ")" stmt
+        | "for" "(" expr? ";" expr? ";" expr? ")" stmt
+        | "return" expr ";"
+        | ...
+...
+```
+
+nodeに必要なのは実際にアセンブリの出力が必要な部分のみ。
+()などは計算の順番を制御するためだけに必要なので不要。
+
+->アロー関数はポインタを構造する
+
+pop rax
+
+### je
+
+je jump if equal
+
+https://qiita.com/DQNEO/items/76a99445e3adde72eb2d
