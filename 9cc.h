@@ -248,6 +248,12 @@ Token *tokenize(char *p)
             p += 4;
             continue;
         }
+        if (strncmp(p, "while", 5) == 0 && !is_alnum(p[5]) && cur->kind != TK_IDENT)
+        {
+            cur = new_token(TK_WHILE, cur, p, 5);
+            p += 5;
+            continue;
+        }
 
         // 小文字のアルファベットである場合
         if ('a' <= *p && *p <= 'z')
@@ -595,6 +601,23 @@ void gen_lval(Node *node)
     printf("  push rax\n");
 }
 
+void instr(const char *fmt, ...)
+{
+    va_list ap;
+    va_start(ap, fmt);
+    printf("\t");
+    printf(fmt, ap);
+    printf("\n");
+}
+
+void label(const char *fmt, ...)
+{
+    va_list ap;
+    va_start(ap, fmt);
+    printf(fmt, ap);
+    printf("\n");
+}
+
 int label_num = 0;
 
 // ノードを受け取ってスタックマシンのように計算するための
@@ -651,6 +674,16 @@ void gen(Node *node)
             printf("  je .Lend%d\n", label_num);
             gen(node->then);
         }
+        printf(".Lend%d:\n", label_num++);
+        return;
+    case ND_WHILE:
+        printf(".Lbegin%d:\n", label_num);
+        gen(node->cond);
+        instr("pop rax");
+        instr("cmp rax, 0");
+        printf("  je .Lend%d\n", label_num);
+        gen(node->then);
+        printf("  jmp .Lbegin%d\n", label_num);
         printf(".Lend%d:\n", label_num++);
         return;
     }

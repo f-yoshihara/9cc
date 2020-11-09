@@ -47,5 +47,7 @@ assert 10 'if(1<2) return 10;'
 assert 15 'if(1<2) return 15;'
 assert 3 'if(1) return 3;'
 assert 5 'if(1<0) return 3; else return 5;'
+assert 8 'a=1; while(a!=8) a=a+1;'
+assert 10 'a=1; while(a<=9) a=a+1;'
 
 echo ok
