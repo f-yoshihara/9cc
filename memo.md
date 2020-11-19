@@ -331,3 +331,32 @@ pop rax
 je jump if equal
 
 https://qiita.com/DQNEO/items/76a99445e3adde72eb2d
+
+### for 文
+
+- tokenize
+- node 作成
+- gen
+
+  Aをコンパイルしたコード
+.LbeginXXX:
+  Bをコンパイルしたコード
+  pop rax
+  cmp rax, 0
+  je  .LendXXX
+  Dをコンパイルしたコード
+  Cをコンパイルしたコード
+  jmp .LbeginXXX
+.LendXXX:
+
+```c
+A;
+begin:
+if(B==0){
+  goto end;
+}
+D;
+C;
+goto begin;
+end:
+```

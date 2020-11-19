@@ -254,6 +254,12 @@ Token *tokenize(char *p)
             p += 5;
             continue;
         }
+        if (strncmp(p, "for", 3) == 0 && !is_alnum(p[3]) && cur->kind != TK_IDENT)
+        {
+            cur = new_token(TK_FOR, cur, p, 3);
+            p += 3;
+            continue;
+        }
 
         // 小文字のアルファベットである場合
         if ('a' <= *p && *p <= 'z')
@@ -292,6 +298,7 @@ typedef enum
     ND_RETURN, // return
     ND_IF,     // if
     ND_WHILE,  // while
+    ND_FOR,    // for
 } NodeKind;
 
 typedef struct Node Node;
@@ -419,7 +426,7 @@ Node *stmt()
     }
     else if (consume_for())
     {
-        node = new_node(ND_WHILE, node, NULL);
+        node = new_node(ND_FOR, node, NULL);
         expect("(");
         if (!consume(";"))
         {
@@ -434,7 +441,6 @@ Node *stmt()
         if (!consume(";"))
         {
             node->inc = expr();
-            expect(";");
         }
         expect(")");
         node->then = stmt();
@@ -683,6 +689,18 @@ void gen(Node *node)
         instr("cmp rax, 0");
         printf("  je .Lend%d\n", label_num);
         gen(node->then);
+        printf("  jmp .Lbegin%d\n", label_num);
+        printf(".Lend%d:\n", label_num++);
+        return;
+    case ND_FOR:
+        gen(node->init);
+        printf(".Lbegin%d:\n", label_num);
+        gen(node->cond);
+        instr("pop rax");
+        instr("cmp rax, 0");
+        printf("  je .Lend%d\n", label_num);
+        gen(node->then);
+        gen(node->inc);
         printf("  jmp .Lbegin%d\n", label_num);
         printf(".Lend%d:\n", label_num++);
         return;
