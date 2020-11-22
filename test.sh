@@ -50,5 +50,7 @@ assert 5 'if(1<0) return 3; else return 5;'
 assert 8 'a=1; while(a!=8) a=a+1;'
 assert 10 'a=1; while(a<=9) a=a+1;'
 assert 5 'a=0; for (i=0; i<5; i=i+1) a=a+1; return a;'
+assert 5 'a=0; for (i=0; i<5; i=i+1) {a=a+1;} return a;'
+assert 10 'a=0; for (i=0; i<5; i=i+1) {a=a+1;a=a+1;} return a;'
 
 echo ok

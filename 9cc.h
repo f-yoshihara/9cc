@@ -213,7 +213,7 @@ Token *tokenize(char *p)
             p += 2;
             continue;
         }
-        if (strchr("+-*/()<>=;", *p))
+        if (strchr("+-*/()<>=;{}", *p))
         {
             cur = new_token(TK_RESERVED, cur, p++, 1);
             continue;
@@ -299,6 +299,7 @@ typedef enum
     ND_IF,     // if
     ND_WHILE,  // while
     ND_FOR,    // for
+    ND_BLOCK,  // block
 } NodeKind;
 
 typedef struct Node Node;
@@ -320,6 +321,7 @@ struct Node
     // for(init;cond;inc)
     Node *init;
     Node *inc;
+    Node *block[100];
 };
 
 Node *new_node(NodeKind kind, Node *lhs, Node *rhs)
@@ -351,6 +353,7 @@ LVar *find_lvar(Token *tok)
     return NULL;
 }
 
+// 識別子
 Node *new_node_ident(Token *tok)
 {
     Node *node = calloc(1, sizeof(Node));
@@ -403,6 +406,16 @@ Node *stmt()
     {
         node = new_node(ND_RETURN, node, expr());
         expect(";");
+    }
+    else if (consume("{"))
+    {
+        int i = 0;
+        node = new_node(ND_BLOCK, node, NULL);
+        while (!consume("}"))
+        {
+            node->block[i++] = stmt();
+        }
+        node->block[i] = NULL;
     }
     else if (consume_if())
     {
@@ -660,6 +673,12 @@ void gen(Node *node)
         return;
     case ND_RETURN:
         gen(node->rhs);
+        return;
+    case ND_BLOCK:
+        for (int i = 0; node->block[i]; i++)
+        {
+            gen(node->block[i]);
+        }
         return;
     case ND_IF:
         // 条件文内の計算を行う
