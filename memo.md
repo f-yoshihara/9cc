@@ -408,3 +408,62 @@ primary = num
 
 関数名も識別子の一つなのでidentで認識する。
 続いて`(`があるか否かでそれが関数名なのか変数名なのかを判断する。
+
+### Makefile
+
+ターゲット: 依存ファイル1 依存ファイル2
+
+ターゲットというバイナリファイルを作成しようとする。
+依存ファイルは0個のファイルを指定することができる。
+
+```Makefile
+9cc: $(OBJS)
+		$(CC) -o 9cc $(OBJS) $(LDFLAGS)
+
+$(OBJS): 9cc.h
+
+test: 9cc
+		./test.sh
+
+clean:
+		rm -f 9cc *.o *~ tmp*
+
+.PHONY: test clean		
+```
+
+`.PHONY`は予約語でこれをターゲットとして依存ファイルを指定すると`make`の引数として指定された場合にはルールを実行してもらえるようになる。
+
+### test.sh
+
+```sh
+# 9ccに引数を渡してアセンブリをtmp.sに出力
+./9cc "$2" > tmp.s
+# 作成したアセンブリからtmpという名前の実行ファイルを作成する（-oオプションで実行ファイルの名前を指定できる）
+cc -o tmp tmp.s
+# 実行ファイルを実行する
+./tmp
+```
+
+今回はtmpに別のcファイル（foo.c）から作成したオブジェクトファイルをリンクして実行できるようにしたい。
+foo.cで定義した関数をtmpから呼び出すことができれば良い。
+
+```sh
+./9cc "foo();" > tmp.s
+gcc tmp.s foo.c -o tmp
+./tmp
+```
+
+```s
+.intel_syntax noprefix
+.globl main
+main:
+  push rbp
+  mov rbp, rsp
+  sub rsp, 208
+  push 0
+  pop rax
+  mov rsp, rbp
+  pop rbp
+  ret
+
+```

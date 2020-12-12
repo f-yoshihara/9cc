@@ -200,7 +200,6 @@ Token *tokenize(char *p)
 
     while (*p)
     {
-        // printf("%ld\n", p);
         if (isspace(*p))
         {
             p++;
@@ -300,6 +299,7 @@ typedef enum
     ND_WHILE,  // while
     ND_FOR,    // for
     ND_BLOCK,  // block
+    ND_FUNC,   // function
 } NodeKind;
 
 typedef struct Node Node;
@@ -373,6 +373,13 @@ Node *new_node_ident(Token *tok)
         node->offset = lvar->offset;
         locals = lvar;
     }
+    return node;
+}
+
+Node *new_node_func()
+{
+    Node *node = calloc(1, sizeof(Node));
+    node->kind = ND_FUNC;
     return node;
 }
 
@@ -602,6 +609,11 @@ Node *primary()
         Token *tok = consume_ident();
         if (tok)
         {
+            if (consume("("))
+            {
+                consume(")");
+                return new_node_func(tok);
+            }
             return new_node_ident(tok);
         }
         return new_node_num(expect_number());
@@ -647,6 +659,10 @@ void gen(Node *node)
     {
     case ND_NUM:
         printf("  push %d\n", node->val);
+        return;
+    case ND_FUNC:
+        printf("  call foo\n");
+        printf("  push 0\n");
         return;
     // 変数が右辺に来ている場合に有効
     case ND_LVAR:
